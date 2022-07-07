@@ -1,0 +1,87 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_RELEASE("$Id")
+AC_INIT(queso.c)
+AC_CONFIG_HEADER(config.h)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_BIGENDIAN
+AC_C_CONST
+AC_HEADER_TIME
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(socket)
+
+dnl Check that the struct ip has member ip_csum
+AC_MSG_CHECKING([struct ip contains ip_csum])
+AC_TRY_COMPILE([#ifdef __linux__
+#define __BSD_SOURCE
+#define _BSD_SOURCE
+#endif
+#include <sys/types.h> 
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>],
+[
+struct ip ip;
+ip.ip_csum = 0;
+],	       
+[AC_MSG_RESULT(yes); AC_DEFINE(HAVE_STRUCT_IP_CSUM)],
+[AC_MSG_RESULT(no);])
+
+PCAP=0
+
+dnl Checking Arguments
+AC_ARG_WITH(pcapdir, [  --with-pcapdir=DIR      Specify libpcap directory],[PCAP=1],[pcapdir=../libpcap-0.4])
+
+dnl Check OS
+AC_MSG_CHECKING(operating system)
+NEEDS_HTONS_IP_LEN=1
+case "`uname -s`" in
+Linux)
+       AC_DEFINE(LINUX)
+       AC_DEFINE(__BSD_SOURCE)
+       AC_DEFINE(_BSD_SOURCE)
+       ;;
+SunOS)
+       PCAP=1
+       case "`uname -r`" in
+       5.4)
+            AC_DEFINE(SOLARIS_CKSUM_BUG)
+            ;;
+       5.5*)
+            AC_DEFINE(SOLARIS_CKSUM_BUG)
+            ;;
+       esac
+       ;;
+    *)
+       PCAP=1
+       ;;
+esac
+AC_MSG_RESULT(`uname -s -r`)
+if test "$PCAP" != "0"; then
+       AC_DEFINE(PCAP)
+       LIBS="$LIBS -L$pcapdir -lpcap"
+       CFLAGS="$CFLAGS -I$pcapdir"
+       AC_SUBST(LIBS)
+       AC_SUBST(CFLAGS)
+fi
+if test ! -z "$NEEDS_HTONS_IP_LEN" ; then
+       AC_DEFINE(NEEDS_HTONS_IP_LEN)
+fi
+
+dnl Checks for libraries.
+AC_CHECK_LIB(nsl,main)
+AC_CHECK_LIB(socket,main)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(pcap.h)
+
+dnl Make Makefile
+AC_OUTPUT(Makefile)
+

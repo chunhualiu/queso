@@ -1,0 +1,10 @@
+/* $Id: config.h.in,v 1.5 1998/09/22 17:19:09 savage Exp $ */
+
+#undef LINUX
+#undef __BSD_SOURCE
+#undef _BSD_SOURCE
+#undef NEEDS_HTONS_IP_LEN
+#undef HAVE_STRUCT_IP_CSUM
+#undef SOLARIS_CKSUM_BUG
+#undef PCAP
+

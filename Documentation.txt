@@ -1,0 +1,108 @@
+INTRODUCTION TO QueSO			 by savage@apostols.org
+===============================================================
+
+When it comes down to computer-related information security audits,
+having the right tools to detect active IPs, ports or OSes becomes 
+an important issue. On this last point (OS identification) is where
+free software is clearly scarce, and the presently used methods are
+brute-force based (to say the least):
+
+        rpcinfo 
+        snmp
+        telnet
+        SendMail version
+        download binaries from the public-ftp (analyzing its format)
+        and another slow and suspicious stuff..
+
+Seeing the problem, I started writing a program a year ago (Abr.97) 
+with the ability of differentiating between a Linux and a Windows box
+sending TCP packets to a listen port. A full featured TCP connection
+is never really established, so it's more of a fine-tuned thing than the 
+other methods previously exposed. On April '98 I re-took this theme, and
+the result is QueSO (wos), which you can get at:
+
+        http://www.apostols.org/projectz/queso/
+
+How we can determine the remote OS using simple tcp packets? Well,
+it's easy, they're packets that don't make any sense, so the RFCs
+don't clearly state what to answer in these kind of situations.
+Facing this ambiguous, each TCP/IP stack takes a different approach
+to the problem, and this way, we get a different response. In some
+cases (like Linux, to name one) some programming mistakes make the OS
+detectable.
+
+What packets does QueSO send?
+
+        0 SYN           * THIS IS VALID, used to verify LISTEN
+        1 SYN+ACK       
+        2 FIN
+        3 FIN+ACK
+        4 SYN+FIN
+        5 PSH
+ 	6 SYN+XXX+YYY   * XXX & YYY are unused TCP flags
+
+All packets have a random seq_num and a 0x0 ack_num.
+
+On response to to packet 0 (SYN), any LISTEN port must answer a
+SYN+ACK with a nonzero ack_num, seq_num and window, or, in case
+of not being LISTEN, it'll send back a RST+ACK with the valid
+ack_num. Here finishes the standard, and we get into QueSO-terrain :)
+
+As it would be way too long to explain every test done and its results,
+I think the best will be to explain QueSO's configuration file format. 
+The file queso.conf is formed by blocks of lines, delimited by the name 
+of the OS (starting with a *)  and a trailing (white-spaced) line:  
+
+Start> * Linux 1.x, 2.0 (by savage@Apostols.Org)
+        0 1 1 1 SA
+        1 0 0 0 R
+        2 - - - -       /* pkt#2 == Doesn't give any answer whatsoever */
+        3 0 0 0 R
+        4 1 1 1 SFA     /* pkt#4 == seqnum, acknum, window, SYN+FIN+ACK */ 
+        5 - - - -       
+	6 1 1 1 SAXY
+End>
+        * blah, blah ...
+
+As I've stated previously, it sends 7 packets (0-6), and compares
+the responses with the config file, where the different OSes are
+described, in a response-based way to each packet (differentiated
+by the dst port -my port).
+
+ - First column is, thus, the pakcet number. 
+ - Second one is seq_num ( 1/0/- )  
+ - Third, ack_num ( 1/0/- )
+ - The Fourth is the window ( 1/0/-/hex_value )
+ - Fifth  is flags ( S=SYN, F=FIN, R=RST, A=ACK, P=PSH, U=URG, X, Y )
+
+i.e. a Linux:
+        2 - - - -       -=> pkt#2 == No response 
+        4 1 1 1 SFA     -=> pkt#4 == seqnum, acknum, window, SYN+FIN+ACK
+        
+If in a block we don't include any of the 7 packets, it means we don't care
+ at all about its contents to pin down what OS we're dealing with.
+
+Implementation:
+---------------
+
+If we run queso w/o args, it shows off "usage()"
+
+[root@apostols queso]# ./queso
+QueSO (c) 1998 savage@apostols.org
+Usage: queso [-v] [-d] [-w] [-f srcIP] [-c file] [-t seconds] host.com[:port]
+       -v         Version
+       -d         Debug mode, print received PKTs.
+       -w         Update queso.conf when new OS is found.
+       -f srcIP   Select correct In/Out IP.
+       -c file    Alternate config file.
+       -t seconds Set reception timeout. (default=3)
+       -n times   How many times PKTs are sent. (default=1)
+
+
+I think its self-explaining..
+
+Salut,          < savage@apostols.org >
+
+---- 8< ----------------------------------------------------------
+CVS: $Id: Documentation.txt,v 1.3 1998/09/15 21:34:37 savage Exp $
+---------------------------------------------------------- >8 ----

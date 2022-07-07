@@ -1,0 +1,107 @@
+INTRODUCCION A QueSO 			por savage@apostols.org
+===============================================================
+
+A la hora de realizar auditorias informaticas es muy importante 
+disponer de herramientas para la deteccion de IPs activas, 
+puertos, y sistemas operativos. En este ultimo punto es donde 
+escasea el software libre, y el que hay se basa en en metodos
+un tanto brutos: 
+
+        rpcinfo 
+        snmp
+        telnet
+        version de SendMail
+        bajarse binarios del ftp-publico remoto
+        y otras lindeces lentas y sospechosas
+
+Visto el problema, hace un an~o (Abr.97) empece un programa que era
+capaz de diferenciar entre un Linux y un Windows mediante el envio
+de paquetes TCP a un puerto LISTEN del remoto. Nunca llega a establecerse
+conexion alguna con el puerto remoto, por lo ke es mas "fino" que los
+expuestos anteriormente. A principios del mes de Abril.98 retome el tema 
+y el resultado obtenido es W.O.S., disponible en:
+
+        http://apostols.org/projectz/queso/
+
+Como somos capaces de determinar el OS remotamente mediante
+simples paquetes TCP ??? Pues facil, son paquetes sin sentido alguno, 
+y en ningun RFC indica que responder ante este tipo de situaciones, 
+y ante la ambiguedad, cada implementacion de pila TCP/IP opta por 
+responder distinto. En algun caso como el de Linux, hay descuidos 
+de programacion que lo hacen detectable.
+
+Que paketes invalidos envia el programa WOS ?
+
+        0 SYN           * ESTE ES VALIDO, usado para comprobar LISTEN
+        1 SYN+ACK       
+        2 FIN
+        3 FIN+ACK
+        4 SYN+FIN
+        5 PSH
+	6 SYN+XXX+YYY  ( XXX & YYY son flags no contemplados en TCP/IP )
+ 
+En todos los paquetes el seq_num es aleatorio y el ack_num es 0.
+
+En respuesta al paquete 0 (SYN), cualquier puerto LISTEN ha de 
+contestar SYN+ACK con ack_num, seq_num y window distintos de 0, 
+o en caso de no estar LISTEN contestara RST+ACK y el ack_num.
+Y aqui termina lo estandarizado y empieza el terreno de WOS :)
+
+Como seria realmente largo explicar cada una de las pruebas 
+realizadas y sus resultados, creo que lo mejor es explicar el 
+formato del fichero de configuracion de WOS. 
+El fichero wos.conf esta formado por bloques de lineas, 
+delimitadas por el nombre del OS que empieza por * y por 
+una linea en blanco al final de bloque:
+
+Inicio> * Linux 1.x, 2.0 (by savage@Apostols.Org) 
+        0 1 1 1 SA
+        1 0 0 0 R
+        2 - - - -       /* pkt#2 == No retorna respuesta alguna */
+        3 0 0 0 R
+        4 1 1 1 SFA     /* pkt#4 == seqnum, acknum, window, SYN+FIN+ACK */ 
+        5 - - - -       
+	6 1 1 1 SAXY	
+Fin>
+        * blah, blah ...
+
+Como he comentado antes, envio 7 paquetes (del 0 al 6), y en el 
+fichero de configuracion describo los SO segun las respuestas que 
+obtengo a cada uno de esos paquetes (diferenciados por el puerto
+de destino -mi puerto- de la respuesta). 
+
+ - La primera columna es por tanto, en numero de paquete. 
+ - La segunda representa el seq_num ( 1/0/- )  
+ - La tercera representa el ack_num ( 1/0/- )
+ - La cuarta representa a window ( 1/0/-/valor_hexadecimal )
+ - La quinta los flags ( S=SYN, F=FIN, R=RST, A=ACK, P=PSH, U=URG, X, Y )
+
+Por ejemplo en Linux:
+        2 - - - -       -=> pkt#2 == No retorna respuesta alguna 
+        4 1 1 1 SFA     -=> pkt#4 == seqnum, acknum, window, SYN+FIN+ACK
+        
+Si en un bloque NO incluimos alguno de los 5 paquetes, significa que no nos
+importa en absoluto su contenido para determinar dicho sistema operativo.
+
+Implementacion:
+---------------
+
+Si invocamos wos sin argumentos, no muestra el "usage()"
+
+[root@apostols wos]# ./wos
+WathOS? by savage@apostols.org
+Usage: ./wos [-v] [-d] [-w] [-c <file>] [-t <time>] <host.com:port>
+       -v      wos version
+       -d      debug mode, pritz received pkts
+       -w      write, addz new Unknown OS entry into wos.conf
+       -c file get templates from another config file
+       -t 1    set timeout to 1 seconds (default=3)
+
+
+creo ke es suficientemente explicativo.
+
+Salut,          < savage@apostols.org >
+
+---- 8< ----------------------------------------------------------
+CVS: $Id: Documentacion.txt,v 1.2 1998/07/25 23:43:44 savage Exp $
+---------------------------------------------------------- >8 ----

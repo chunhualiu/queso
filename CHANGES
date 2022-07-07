@@ -1,0 +1,100 @@
+queso-980922
+
+  o libpcap support for Linux and Solaris ( I think *BSD will work )
+    Thanx to Lamont Granquist <lamontg@hitl.washington.edu> 
+
+queso-980916
+
+  o Documentation.txt typos (thanx rodneybrown@pmsc.com)
+
+  o New fingerprints ( HP3000, Unixware 2.1.1, OS/400 ... )
+
+  o minor queso.conf format update: Ack field can be 1 (any), 0 (no ack) 
+    and now +num (num == recv.Ack - sent.Seq), or R == Random
+
+queso-980915
+
+  o Fixed paths in Makefile.in by Marc Baudoin <babafou@babafou.eu.org>
+
+  o Some new patterns ( Gandalf, HP/UX 11, Shiva, Ascend, Equinox ... )
+
+  o defined NEEDS_HTONS_IP_LEN for linux, next week i will work hard
+    on libpcap stuff and porting to FreeBSD and Solaris.
+
+queso-980903
+
+  o Oooops, configure.in, setup.h.in and tcpip.c definitions about
+    ip.ip_csum don't match, fixed. Thanx to  Alexander Frink
+    <frink@thep.physik.uni-mainz.de> and  Rafal Maszkowski <rzm@icm.edu.pl>
+    
+  o New pattern: * IBM XStation 1x0 (by Stefan.Eilemann@dlr.de) 
+  
+  o New Linux pattern: Because some obscure sendmail behavior,
+    it closes listen socket after first SYN. I have tested only on 
+    linux and 'fixed' with this pattern.
+
+queso-980902
+
+  o QueSO don't select correct in/out ip since 980827, because 
+    'config.h' isn't included in 'tcpip.c' :( , fixed.
+    
+  o Some patterns.
+  
+  o Some cosmetic aspects when multiple hosts are scanned.
+  
+queso-980831
+
+  o Command line now supports multiple hosts, and -p option to select
+    default port on all host, except ones with :port
+    
+  o Changes in configure.in and tcpip.h to be compilable on FreeBSD 
+    (don't run ..), patch by Renaud Deraison <deraison@worldnet.fr>
+    
+  o New patterns in queso.conf (HP-UX 10.20, Sinix, HP-JetDirect, 
+    Netware 5.0, etc .. by several contributors )
+    
+queso-980827
+
+  o Minimal autoconfig support, to simplify the work of debian
+    pakage maintainer (Stephane Bortzmeyer <bortzmeyer@pasteur.fr>).
+
+  o Host/mask:port extended again, mask now supports subranges:
+    10.1.1.64/24-:80 tests port 80 from 10.1.1.64 to 10.1.1.254,
+    10.1.1.60/-24:80 tests port 80 from 10.1.1.1 to 10.1.1.64
+
+  o Patch from Jerome Alet <alet@unice.fr> :
+
+  o The syntax of hostname_or_IP:port has ben extended to support
+    netmask -> hostname_or_ip/netmaskbits:port
+
+  o Patch from Johnny Tevessen <j.tevessen@line.org> :
+
+  o Since queso requires root access to send raw packages, some people
+    might install it suid root. This might open security holes (like
+    giving people access to a root shell) by some buffer overruns
+    in queso. I tried to fix some of these (this includes the buffer
+    for the config file name given at the command line which actually
+    *was* usuable to get root access).
+
+  o For the same reasons I added some more checks to the file parsing
+    routines (config file and /proc/net/*). In a chroot()ed environment,
+    /proc could be just anything. Don't dare to parse it, though.
+
+  o Replaced index(), bzero(), and bcopy() by their ANSI counterparts
+    strchr(), memset(), and memcopy(), since they are obsolete and not
+    as portable as the ANSI functions are.
+
+  o Changed return values to something standardized. Since ANSI C only
+    allows return values of 0, EXIT_SUCCESS or EXIT_FAILURE, I changed
+    it to them. queso should be able to compile under AmigaOS now,
+    which uses the value "20" for EXIT_FAILURE, for example, instead
+    of the Un*x "1".
+
+  o Removed "text" flag from fopen(). Although it is ignored by
+    fopen() anyway, it is not portable and assumed by default.
+
+  o Pre-set some variables to make gcc happy
+
+--------------------------------------------------------------------->8--
+$Id: CHANGES,v 1.8 1998/09/22 17:41:32 savage Exp $
+--8<---------------------------------------------------------------------

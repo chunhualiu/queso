@@ -1,0 +1,21 @@
+My preferred installation is queso in /sbin and queso.conf in /etc 
+Use --prefix=something to change your preferences, default is /usr/local
+
+Linux with native RAW sockets :
+
+        $ ./config --prefix=
+	$ make
+	$ su 
+	# make install
+
+
+The rest with libpcap (ftp://ftp.ee.lbl.gov/libpcap.tar.Z) :
+
+        $ ./config --prefix= --with-pcapdir=/usr/source/libpcap-0.4
+	$ make
+	$ su 
+	# make install
+
+
+Salut,         < savage >
+
